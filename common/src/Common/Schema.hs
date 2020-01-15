@@ -7,6 +7,9 @@
 
 module Common.Schema where
 
+import Data.Aeson
+import Data.Aeson.TH (defaultOptions, deriveJSON)
+import Data.Int (Int64)
 import qualified Database.Persist.TH as PTH
 import Data.Text (Text)
 import Data.Time (UTCTime)
@@ -39,3 +42,26 @@ PTH.share [PTH.mkPersist PTH.sqlSettings, PTH.mkMigrate "migrateAll"] [PTH.persi
     deriving Show Eq
 
 |]
+
+newtype NormalUserId = NormalUserId Int64
+  deriving (Show, Eq)
+
+newtype CreatorUserId = CreatorUserId Int64
+  deriving (Show, Eq)
+
+data LoginInfo = LoginInfo
+  { loginInfoEmail :: Text
+  , loginInfoPassword :: Text
+  } deriving (Show, Eq)
+
+data EventSummary = EventSummary
+  { event :: Event
+  , tiers :: [(Text, Double, Int64, Int64)] -- Tier name, price, sold so far, total
+  } deriving (Show, Eq)
+
+deriveJSON defaultOptions ''User
+deriveJSON defaultOptions ''Event
+deriveJSON defaultOptions ''EventTicket
+deriveJSON defaultOptions ''PurchaseRecord
+deriveJSON defaultOptions ''LoginInfo
+deriveJSON defaultOptions ''EventSummary
