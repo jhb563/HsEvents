@@ -20,8 +20,19 @@ executable backend
   main-is: Main.hs
   hs-source-dirs: src
   other-modules:
+      Backend.Database
+      Backend.Monad.App
+      Backend.Monad.Database
       Backend.Server
   build-depends:
-      base
+      aeson
+    , base
     , common
+    , exceptions
+    , monad-logger
+    , mtl
+    , persistent
+    , persistent-postgresql
+    , servant-server
+    , text
   default-language:    Haskell2010
