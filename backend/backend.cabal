@@ -28,11 +28,14 @@ executable backend
       aeson
     , base
     , common
+    , esqueleto
     , exceptions
     , monad-logger
     , mtl
     , persistent
     , persistent-postgresql
+    , pwstore-fast
+    , servant
     , servant-server
     , text
   default-language:    Haskell2010

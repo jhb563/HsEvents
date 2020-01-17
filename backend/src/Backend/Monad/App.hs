@@ -26,7 +26,7 @@ liftSqlToServer = ServerMonad
 
 instance MonadDatabase ServerMonad where
   createUser = liftSqlToServer . createUser
-  loginUser = liftSqlToServer . loginUser
+  loginUser loginInfo role = liftSqlToServer (loginUser loginInfo role)
   getCurrentEvents = liftSqlToServer getCurrentEvents
   getPurchasedEvents = liftSqlToServer . getPurchasedEvents
   createEvent = liftSqlToServer . createEvent

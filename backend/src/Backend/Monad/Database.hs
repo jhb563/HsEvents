@@ -7,16 +7,20 @@ module Backend.Monad.Database where
 import Control.Monad (Monad)
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Logger (MonadLogger)
+import Crypto.PasswordStore (makePassword, verifyPassword)
 import Data.Int (Int64)
 import Data.Text (Text)
-import Database.Persist.Postgresql (SqlPersistT)
+import Data.Text.Encoding (encodeUtf8)
+import Database.Esqueleto
+import Database.Persist (Entity(..))
+import Database.Persist.Postgresql (SqlPersistT, fromSqlKey)
 
 import Common.Schema
 import Backend.Database
 
 class (Monad m) => MonadDatabase m where
   createUser :: (User, Text) -> m Int64
-  loginUser :: LoginInfo -> m (Either LoginError Int64)
+  loginUser :: LoginInfo -> Text -> m (Either LoginError Int64)
   getCurrentEvents :: m [KeyVal Event]
   getPurchasedEvents :: Int64 -> m [(Event, [EventTicket])]
   createEvent :: Event -> m Int64
@@ -39,10 +43,25 @@ instance (MonadLogger m, MonadIO m) => MonadDatabase (SqlPersistT m) where
   purchaseTicket = purchaseTicketSql
 
 createUserSql :: (MonadIO m, MonadLogger m) => (User, Text) -> SqlPersistT m Int64
-createUserSql = undefined
+createUserSql (user, password) = do
+  userKey <- insert user
+  passwordHash <- liftIO $ makePassword (encodeUtf8 password) 17
+  insert (AuthData userKey passwordHash "user")
+  return (fromSqlKey userKey)
 
-loginUserSql :: (MonadIO m, MonadLogger m) => LoginInfo -> SqlPersistT m (Either LoginError Int64)
-loginUserSql = undefined
+loginUserSql :: (MonadIO m, MonadLogger m) => LoginInfo -> Text -> SqlPersistT m (Either LoginError Int64)
+loginUserSql (LoginInfo email password) role = do
+  userAuthData <- select . from $ \(users `InnerJoin` authData) -> do
+    on (users ^. UserId ==. authData ^. AuthDataUserId)
+    where_ (users ^. UserEmail ==. val email)
+    where_ (authData ^. AuthDataUserRole ==. val role)
+    return authData
+  case userAuthData of
+    [Entity _ (AuthData uid hash _)] -> do
+      if verifyPassword (encodeUtf8 password) hash
+        then return (Right $ fromSqlKey uid)
+        else return (Left InvalidPassword)
+    _ -> return (Left InvalidUsername)
 
 getCurrentEventsSql :: (MonadIO m, MonadLogger m) => SqlPersistT m [KeyVal Event]
 getCurrentEventsSql = undefined

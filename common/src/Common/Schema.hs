@@ -9,6 +9,7 @@ module Common.Schema where
 
 import Data.Aeson
 import Data.Aeson.TH (defaultOptions, deriveJSON)
+import Data.ByteString (ByteString)
 import Data.Int (Int64)
 import qualified Database.Persist.TH as PTH
 import Data.Text (Text)
@@ -39,6 +40,13 @@ PTH.share [PTH.mkPersist PTH.sqlSettings, PTH.mkMigrate "migrateAll"] [PTH.persi
   PurchaseRecord sql=purchase_records
     eventTicketId EventTicketId
     purchaser UserId
+    deriving Show Eq
+
+  AuthData sql=auth_data
+    userId UserId
+    hashString ByteString
+    userRole Text
+    UniqueUserId userId
     deriving Show Eq
 
 |]

@@ -23,6 +23,7 @@ library
   build-depends:
       aeson
     , base
+    , bytestring
     , persistent-template
     , servant
     , text
