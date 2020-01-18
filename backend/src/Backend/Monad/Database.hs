@@ -12,7 +12,7 @@ import Data.Int (Int64)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8)
 import Database.Esqueleto
-import Database.Persist (Entity(..))
+import Database.Persist (Entity(..), get)
 import Database.Persist.Postgresql (SqlPersistT, fromSqlKey)
 
 import Common.Schema
@@ -24,6 +24,7 @@ class (Monad m) => MonadDatabase m where
   getCurrentEvents :: m [KeyVal Event]
   getPurchasedEvents :: Int64 -> m [(Event, [EventTicket])]
   createEvent :: Event -> m Int64
+  fetchEvent :: Int64 -> m (Maybe Event)
   createTicketsForEvent :: Int64 -> [(Text, Double, Int64)] -> m [Int64]
   getCreatedEvents :: Int64 -> m [KeyVal Event]
   getEventSummary :: Int64 -> m EventSummary
@@ -36,6 +37,7 @@ instance (MonadLogger m, MonadIO m) => MonadDatabase (SqlPersistT m) where
   getCurrentEvents = getCurrentEventsSql
   getPurchasedEvents = getPurchasedEventsSql
   createEvent = createEventSql
+  fetchEvent = fetchEventSql
   createTicketsForEvent = createTicketsForEventSql
   getCreatedEvents = getCreatedEventsSql
   getEventSummary = getEventSummarySql
@@ -71,6 +73,9 @@ getPurchasedEventsSql = undefined
 
 createEventSql :: (MonadIO m, MonadLogger m) => Event -> SqlPersistT m Int64
 createEventSql = undefined
+
+fetchEventSql :: (MonadIO m, MonadLogger m) => Int64 -> SqlPersistT m (Maybe Event)
+fetchEventSql eid = get (toSqlKey eid)
 
 createTicketsForEventSql :: (MonadIO m, MonadLogger m) => Int64 -> [(Text, Double, Int64)] -> SqlPersistT m [Int64]
 createTicketsForEventSql = undefined

@@ -67,6 +67,9 @@ data EventSummary = EventSummary
   , tiers :: [(Text, Double, Int64, Int64)] -- Tier name, price, sold so far, total
   } deriving (Show, Eq)
 
+dropAlreadySold :: (Text, Double, Int64, Int64) -> (Text, Double, Int64)
+dropAlreadySold (n, p, _, t) = (n, p, t)
+
 deriveJSON defaultOptions ''User
 deriveJSON defaultOptions ''Event
 deriveJSON defaultOptions ''EventTicket

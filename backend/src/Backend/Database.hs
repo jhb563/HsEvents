@@ -19,6 +19,9 @@ data KeyVal a = KeyVal
 entityToKeyVal :: (ToBackendKey SqlBackend a) => Entity a -> KeyVal a
 entityToKeyVal e = KeyVal (fromSqlKey . entityKey $ e) (entityVal e)
 
+unKeyVal :: KeyVal a -> (Int64, a)
+unKeyVal (KeyVal k v) = (k, v)
+
 instance (FromJSON a) => FromJSON (KeyVal a) where
   parseJSON = withObject "Keyval" $ \o -> do
     k <- o .: "key"

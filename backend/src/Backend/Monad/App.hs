@@ -30,6 +30,7 @@ instance MonadDatabase ServerMonad where
   getCurrentEvents = liftSqlToServer getCurrentEvents
   getPurchasedEvents = liftSqlToServer . getPurchasedEvents
   createEvent = liftSqlToServer . createEvent
+  fetchEvent = liftSqlToServer . fetchEvent
   createTicketsForEvent eid tiers = liftSqlToServer (createTicketsForEvent eid tiers)
   getCreatedEvents = liftSqlToServer . getCreatedEvents
   getEventSummary = liftSqlToServer . getEventSummary
