@@ -24,12 +24,15 @@ executable backend
       Backend.Monad.App
       Backend.Monad.Database
       Backend.Server
+      Backend.HTML
   build-depends:
       aeson
     , base
+    , bytestring
     , common
     , esqueleto
     , exceptions
+    , http-media
     , monad-logger
     , mtl
     , persistent

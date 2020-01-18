@@ -8,6 +8,6 @@
 
   shells = {
     ghc = ["common" "backend" "frontend"];
-    ghcjs = ["common" "frontend"];
+    ghcjs = ["frontend"];
   };
 })

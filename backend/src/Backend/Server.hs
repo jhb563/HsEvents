@@ -5,6 +5,7 @@
 module Backend.Server where
 
 import Control.Monad.IO.Class (liftIO)
+import qualified Data.ByteString.Lazy as Lazy
 import Data.Int (Int64)
 import Data.Proxy (Proxy(..))
 import Data.Text (Text)
@@ -13,11 +14,13 @@ import Database.Persist.Postgresql (ConnectionString, fromSqlKey)
 import Network.Wai.Handler.Warp (run)
 import Servant.API
 import Servant.Server
+import Servant.Server.StaticFiles (serveDirectoryWebApp)
 
 import Common.API
 import Common.Schema
 
 import Backend.Database
+import Backend.HTML
 import Backend.Monad.App
 import Backend.Monad.Database
 
@@ -104,14 +107,40 @@ purchasesServer = enterQueueHandler :<|> purchaseTicketHandler
 ------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------
 
+------------------------------------------------------------------------------------------
+-- Static Content
+------------------------------------------------------------------------------------------
+type StaticContentApi =
+  "index" :> Get '[HTML] RawHtml :<|>
+  Raw
+
+loadIndex :: Handler RawHtml
+loadIndex = RawHtml <$>
+  (liftIO $ Lazy.readFile "frontend-result/bin/frontend.jsexe/index.html")
+
+staticServer :: Server StaticContentApi
+staticServer =
+  loadIndex :<|>
+  serveDirectoryWebApp "frontend-result/bin/frontend.jsexe"
+
+------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
 transformServerToHandler :: ConnectionString -> ServerMonad a -> Handler a
 transformServerToHandler conn (ServerMonad a) = do
   result <- liftIO $ runSqlAction conn a
   Handler $ return result
 
-fullServer :: ConnectionString -> Server FullApi
-fullServer conn = hoistServerWithContext fullApi authProxy (transformServerToHandler conn) $
+fullApiServer :: ConnectionString -> Server FullApi
+fullApiServer conn = hoistServerWithContext fullApi authProxy (transformServerToHandler conn) $
   usersServer :<|> eventsServer :<|> purchasesServer
+
+type CompleteServerApi = FullApi :<|> StaticContentApi
+
+completeServerApi :: Proxy CompleteServerApi
+completeServerApi = Proxy
+
+completeServerApiServer :: ConnectionString -> Server CompleteServerApi
+completeServerApiServer conn = fullApiServer conn :<|> staticServer
 
 ------------------------------------------------------------------------------------------
 -- Authenication
@@ -144,4 +173,8 @@ authProxy = Proxy
 ------------------------------------------------------------------------------------------
 
 runServer :: IO ()
-runServer = run 8080 (serveWithContext fullApi (authContext localConnString) (fullServer localConnString))
+runServer = run 8080
+  (serveWithContext
+    completeServerApi
+    (authContext localConnString)
+    (completeServerApiServer localConnString))
